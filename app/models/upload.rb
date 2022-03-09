@@ -28,7 +28,7 @@ class Upload < ActiveRecord::Base
   has_many :posts, through: :post_uploads
 
   has_many :optimized_images, dependent: :destroy
-  has_many :user_uploads, dependent: :destroy
+  has_many :upload_references, dependent: :destroy
   has_many :topic_thumbnails
 
   attr_accessor :for_group_message
