@@ -4,8 +4,23 @@ class SiteSetting < ActiveRecord::Base
   extend GlobalPath
   extend SiteSettingExtension
 
+  has_many :upload_references, as: :target, dependent: :destroy
+
   validates_presence_of :name
   validates_presence_of :data_type
+
+  after_save do
+    if saved_change_to_value?
+      if self.data_type == SiteSettings::TypeSupervisor.types[:upload]
+        UploadReference.where(target: self).where.not(upload_id: self.value).destroy_all
+        UploadReference.find_or_create_by!(upload_id: self.value, target: self) if self.value.present?
+      elsif self.data_type == SiteSettings::TypeSupervisor.types[:uploaded_image_list]
+        upload_ids = self.value.split('|').compact.uniq
+        UploadReference.where(target: self).where.not(upload_id: upload_ids).destroy_all
+        upload_ids.each { |upload_id| UploadReference.find_or_create_by!(upload_id: upload_id, target: self) }
+      end
+    end
+  end
 
   def self.load_settings(file, plugin: nil)
     SiteSettings::YamlLoader.new(file).load do |category, name, default, opts|
