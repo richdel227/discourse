@@ -4,6 +4,14 @@ class ThemeField < ActiveRecord::Base
 
   belongs_to :upload
   has_one :javascript_cache, dependent: :destroy
+  has_one :upload_reference, as: :target, dependent: :destroy
+
+  after_save do
+    if self.type_id == ThemeField.types[:theme_upload_var] && saved_change_to_upload_id?
+      UploadReference.where(target: self).where.not(upload_id: self.upload_id).destroy_all
+      UploadReference.find_or_create_by!(upload_id: self.upload_id, target: self) if self.upload_id.present?
+    end
+  end
 
   scope :find_by_theme_ids, ->(theme_ids) {
     return none unless theme_ids.present?

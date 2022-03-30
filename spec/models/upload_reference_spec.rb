@@ -103,6 +103,31 @@ describe UploadReference do
     end
   end
 
+  context 'theme field uploads' do
+    fab!(:upload) { Fabricate(:upload) }
+
+    it 'creates upload refererences' do
+      theme_field = nil
+      expect do
+        theme_field = ThemeField.create!(
+          theme_id: Fabricate(:theme).id,
+          target_id: 0,
+          name: 'field',
+          value: '',
+          upload: upload,
+          type_id: ThemeField.types[:theme_upload_var],
+        )
+      end.to change { UploadReference.count }.by(1)
+
+      upload_reference = UploadReference.last
+      expect(upload_reference.upload).to eq(upload)
+      expect(upload_reference.target).to eq(theme_field)
+
+      expect { theme_field.destroy! }
+        .to change { UploadReference.count }.by(-1)
+    end
+  end
+
   context 'user export uploads' do
     fab!(:upload) { Fabricate(:upload) }
 
