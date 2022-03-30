@@ -36,6 +36,8 @@ class Group < ActiveRecord::Base
   has_many :associated_groups, through: :group_associated_groups, dependent: :destroy
 
   belongs_to :flair_upload, class_name: 'Upload'
+  has_many :upload_references, as: :target, dependent: :destroy
+
   belongs_to :smtp_updated_by, class_name: 'User'
   belongs_to :imap_updated_by, class_name: 'User'
 
@@ -50,6 +52,13 @@ class Group < ActiveRecord::Base
 
   after_save :enqueue_update_mentions_job,
     if: Proc.new { |g| g.name_before_last_save && g.saved_change_to_name? }
+
+  after_save do
+    if saved_change_to_flair_upload_id?
+      UploadReference.where(target: self).where.not(upload_id: self.flair_upload_id).destroy_all
+      UploadReference.find_or_create_by!(upload_id: self.flair_upload_id, target: self) if self.flair_upload_id.present?
+    end
+  end
 
   after_save :expire_cache
   after_destroy :expire_cache

@@ -51,6 +51,23 @@ describe UploadReference do
     end
   end
 
+  context 'group uploads' do
+    fab!(:upload) { Fabricate(:upload) }
+
+    it 'creates upload references' do
+      group = nil
+      expect { group = Fabricate(:group, flair_upload_id: upload.id) }
+        .to change { UploadReference.count }.by(1)
+
+      upload_reference = UploadReference.last
+      expect(upload_reference.upload).to eq(upload)
+      expect(upload_reference.target).to eq(group)
+
+      expect { group.destroy! }
+        .to change { UploadReference.count }.by(-1)
+    end
+  end
+
   context 'post uploads' do
     fab!(:upload) { Fabricate(:upload) }
     fab!(:post) { Fabricate(:post, raw: "[](#{upload.short_url})") }
@@ -84,16 +101,28 @@ describe UploadReference do
       expect { provider.destroy('logo') }
         .to change { UploadReference.count }.by(-1)
     end
+  end
 
-    it 'creates upload references for uploaded_image_lists' do
-      expect { provider.save('selectable_avatars', "#{upload.id}|#{upload2.id}", SiteSettings::TypeSupervisor.types[:uploaded_image_list]) }
-        .to change { UploadReference.count }.by(2)
+  context 'user export uploads' do
+    fab!(:upload) { Fabricate(:upload) }
+
+    it 'creates upload references' do
+      user_export = nil
+      expect do
+        user_export = UserExport.create!(
+          file_name: 'export',
+          user: Fabricate(:user),
+          upload: upload,
+          topic: Fabricate(:topic),
+        )
+      end.to change { UploadReference.count }.by(1)
 
       upload_reference = UploadReference.last
-      expect(upload_reference.target).to eq(SiteSetting.find_by(name: 'selectable_avatars'))
+      expect(upload_reference.upload).to eq(upload)
+      expect(upload_reference.target).to eq(user_export)
 
-      expect { provider.destroy('selectable_avatars') }
-        .to change { UploadReference.count }.by(-2)
+      expect { user_export.destroy! }
+        .to change { UploadReference.count }.by(-1)
     end
   end
 end
