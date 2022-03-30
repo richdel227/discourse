@@ -220,15 +220,21 @@ describe UploadReference do
     fab!(:upload) { Fabricate(:upload) }
 
     it 'creates upload references' do
-      user = nil
-      expect { user = Fabricate(:user, uploaded_avatar_id: upload.id) }
-        .to change { UploadReference.count }.by(1)
+      user_export = nil
+      expect do
+        user_export = UserExport.create!(
+          file_name: 'export',
+          user: Fabricate(:user),
+          upload: upload,
+          topic: Fabricate(:topic),
+        )
+      end.to change { UploadReference.count }.by(1)
 
       upload_reference = UploadReference.last
       expect(upload_reference.upload).to eq(upload)
-      expect(upload_reference.target).to eq(user)
+      expect(upload_reference.target).to eq(user_export)
 
-      expect { user.destroy! }
+      expect { user_export.destroy! }
         .to change { UploadReference.count }.by(-1)
     end
   end
