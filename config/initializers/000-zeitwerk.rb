@@ -32,4 +32,6 @@ Rails.autoloaders.each do |autoloader|
   )
 end
 Rails.autoloaders.main.ignore("lib/tasks",
-                              "lib/generators")
+                              "lib/generators",
+                              "lib/freedom_patches",
+                              "lib/unicorn_logstash_patch.rb")

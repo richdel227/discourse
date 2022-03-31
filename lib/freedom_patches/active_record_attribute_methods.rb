@@ -9,9 +9,9 @@
 # For the time being we monkey patch this away, longer term we
 # hope Rails will allow us for this to be optional
 
-SanePatch.patch("activerecord", "~> 7.0.2") do
-  module FreedomPatches
-    module ActiveRecordAttributeMethods
+module ActiveRecord
+  module AttributeMethods
+    module ClassMethods
       BLANK_ARRAY = [].freeze
 
       # this patch just allows everything in Rails 6+
@@ -20,8 +20,6 @@ SanePatch.patch("activerecord", "~> 7.0.2") do
         # once all frozen string hints are in place
         BLANK_ARRAY
       end
-
-      ActiveRecord::Base.extend(self)
     end
   end
 end
