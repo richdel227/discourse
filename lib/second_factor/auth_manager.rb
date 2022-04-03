@@ -48,9 +48,8 @@ the following methods:
   finish the action once 2fa is completed. Everything in this Hash must be
   serializable to JSON.
 
-  :redirect_path => relative subfolder-aware path that the user should be
-  redirected to after the action is finished. When this key is omitted, the
-  redirect path is set to the homepage (/).
+  :redirect_url => where the user should be redirected after they confirm 2fa.
+  A relative path (must be subfolder-aware) is a valid value for this key.
 
   :description => optional action-specific description message that's shown on
   the 2FA page.
@@ -144,12 +143,15 @@ class SecondFactor::AuthManager
   end
 
   def run!(request, params, secure_session)
-    if !allowed_methods.any? { |m| @current_user.valid_second_factor_method_for_user?(m) }
-      @action.no_second_factors_enabled!(params)
-      create_result(:no_second_factor)
-    elsif nonce = params[:second_factor_nonce].presence
-      verify_second_factor_auth_completed(nonce, secure_session)
-      create_result(:second_factor_auth_completed)
+    if nonce = params[:second_factor_nonce].presence
+      data = verify_second_factor_auth_completed(nonce, secure_session)
+      create_result(:second_factor_auth_completed, data)
+    elsif @action.skip_second_factor_auth?(params)
+      data = @action.second_factor_auth_skipped!(params)
+      create_result(:second_factor_auth_skipped, data)
+    elsif !allowed_methods.any? { |m| @current_user.valid_second_factor_method_for_user?(m) }
+      data = @action.no_second_factors_enabled!(params)
+      create_result(:no_second_factor, data)
     else
       nonce = initiate_second_factor_auth(params, secure_session, request)
       raise SecondFactorRequired.new(nonce: nonce)
@@ -162,18 +164,19 @@ class SecondFactor::AuthManager
     config = @action.second_factor_auth_required!(params)
     nonce = SecureRandom.alphanumeric(32)
     callback_params = config[:callback_params] || {}
-    redirect_path = config[:redirect_path] || GlobalPath.path("").presence || "/"
     challenge = {
       nonce: nonce,
-      callback_method: request.request_method,
-      callback_path: request.path,
+      callback_method: config[:callback_method] || request.request_method,
+      callback_path: config[:callback_path] || request.path,
       callback_params: callback_params,
-      redirect_path: redirect_path,
       allowed_methods: allowed_methods.to_a,
       generated_at: Time.zone.now.to_i
     }
     if config[:description]
       challenge[:description] = config[:description]
+    end
+    if config[:redirect_url].present?
+      challenge[:redirect_url] = config[:redirect_url]
     end
     secure_session["current_second_factor_auth_challenge"] = challenge.to_json
     nonce
@@ -190,7 +193,8 @@ class SecondFactor::AuthManager
 
     secure_session["current_second_factor_auth_challenge"] = nil
     callback_params = challenge[:callback_params]
-    @action.second_factor_auth_completed!(callback_params)
+    data = @action.second_factor_auth_completed!(callback_params)
+    data
   end
 
   def add_method(id)
@@ -201,7 +205,7 @@ class SecondFactor::AuthManager
     end
   end
 
-  def create_result(status)
-    SecondFactor::AuthManagerResult.new(status)
+  def create_result(status, data = nil)
+    SecondFactor::AuthManagerResult.new(status, data)
   end
 end

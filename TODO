@@ -1,0 +1,4 @@
+update docs
+auth manager spec
+discourse connect provider action specs
+add test for overriding callback method/path
