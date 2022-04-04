@@ -110,8 +110,10 @@ module Discourse
 
     # Custom directories with classes and modules you want to be autoloadable.
     config.autoload_paths << "#{root}/lib"
+    config.autoload_paths << "#{root}/lib/guardian"
 
     config.eager_load_paths << "#{root}/lib"
+    config.eager_load_paths << "#{root}/lib/guardian"
 
     # Only load the plugins named here, in the order given (default is alphabetical).
     # :all can be used as a placeholder for all plugins not explicitly named.

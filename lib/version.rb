@@ -4,15 +4,17 @@ module Discourse
   VERSION_REGEXP ||= /\A\d+\.\d+\.\d+(\.beta\d+)?\z/
   VERSION_COMPATIBILITY_FILENAME ||= ".discourse-compatibility"
 
-  module Version #:nodoc:
-    MAJOR = 2
-    MINOR = 9
-    TINY  = 0
-    PRE   = 'beta3'
+  # work around reloader
+  unless defined? ::Discourse::VERSION
+    module VERSION #:nodoc:
+      MAJOR = 2
+      MINOR = 9
+      TINY  = 0
+      PRE   = 'beta3'
 
-    STRING = [MAJOR, MINOR, TINY, PRE].compact.join('.')
+      STRING = [MAJOR, MINOR, TINY, PRE].compact.join('.')
+    end
   end
-  VERSION = Version
 
   class InvalidVersionListError < StandardError; end
 

@@ -29,6 +29,18 @@ Rails.autoloaders.each do |autoloader|
     'onceoff' => 'Jobs',
     'regular' => 'Jobs',
     'scheduled' => 'Jobs',
+    'canonical_url' => 'CanonicalURL',
+    'clean_up_unmatched_ips' => 'CleanUpUnmatchedIPs',
+    'homepage_constraint' => 'HomePageConstraint',
+    'ip_addr' => 'IPAddr',
+    'onpdiff' => 'ONPDiff',
+    'pop3_polling_enabled_setting_validator' => 'POP3PollingEnabledSettingValidator',
+    'version' => 'Discourse',
+    'google_oauth2_authenticator' => 'GoogleOAuth2Authenticator',
+    'omniauth_strategies' => 'OmniAuthStrategies',
+    'csrf_token_verifier' => 'CSRFTokenVerifier',
+    'html' => 'HTML',
+    'json' => 'JSON'
   )
 end
 Rails.autoloaders.main.ignore("lib/tasks",
