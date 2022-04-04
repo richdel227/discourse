@@ -44,6 +44,7 @@ class Category < ActiveRecord::Base
   has_many :category_groups, dependent: :destroy
   has_many :groups, through: :category_groups
   has_many :topic_timers, dependent: :destroy
+  has_many :upload_references, as: :target, dependent: :destroy
 
   has_and_belongs_to_many :web_hooks
 
@@ -79,6 +80,14 @@ class Category < ActiveRecord::Base
   after_save :clear_subcategory_ids
   after_save :clear_url_cache
   after_save :update_reviewables
+
+  after_save do
+    if saved_change_to_uploaded_logo_id? || saved_change_to_uploaded_background_id?
+      upload_ids = [self.uploaded_logo_id, self.uploaded_background_id].compact.uniq
+      UploadReference.where(target: self).where.not(upload_id: upload_ids).destroy_all
+      upload_ids.each { |upload_id| UploadReference.find_or_create_by!(upload_id: upload_id, target: self) }
+    end
+  end
 
   after_destroy :reset_topic_ids_cache
   after_destroy :publish_category_deletion
