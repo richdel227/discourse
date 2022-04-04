@@ -150,4 +150,52 @@ describe UploadReference do
         .to change { UploadReference.count }.by(-1)
     end
   end
+
+  context 'theme field uploads' do
+    fab!(:upload) { Fabricate(:upload) }
+
+    it 'creates upload refererences' do
+      theme_field = nil
+      expect do
+        theme_field = ThemeField.create!(
+          theme_id: Fabricate(:theme).id,
+          target_id: 0,
+          name: 'field',
+          value: '',
+          upload: upload,
+          type_id: ThemeField.types[:theme_upload_var],
+        )
+      end.to change { UploadReference.count }.by(1)
+
+      upload_reference = UploadReference.last
+      expect(upload_reference.upload).to eq(upload)
+      expect(upload_reference.target).to eq(theme_field)
+
+      expect { theme_field.destroy! }
+        .to change { UploadReference.count }.by(-1)
+    end
+  end
+
+  context 'theme setting uploads' do
+    fab!(:upload) { Fabricate(:upload) }
+
+    it 'creates upload refererences' do
+      theme_setting = nil
+      expect do
+        theme_setting = ThemeSetting.create!(
+          name: 'field',
+          data_type: ThemeSetting.types[:upload],
+          value: upload.id,
+          theme_id: Fabricate(:theme).id,
+        )
+      end.to change { UploadReference.count }.by(1)
+
+      upload_reference = UploadReference.last
+      expect(upload_reference.upload).to eq(upload)
+      expect(upload_reference.target).to eq(theme_setting)
+
+      expect { theme_setting.destroy! }
+        .to change { UploadReference.count }.by(-1)
+    end
+  end
 end
